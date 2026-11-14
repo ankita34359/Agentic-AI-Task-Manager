@@ -72,4 +72,4 @@ Rules: animate `transform`/`opacity` only, cap particle counts, pause everything
 
 ## Accessibility & motion
 
-Dark/light themes (follows the OS, toggle persists). Honors `prefers-reduced-motion`: aurora, particles, magnetic buttons and transform animations are disabled or reduced to fades.
+Dark/light themes (follows the OS, toggle persists). Honors `prefers-reduced-motion`: the marquee, drifting background, cursor trail, confetti, bursts' pop and the torn-paper transition are switched off (instant route swap + quick fade), and Tally holds static poses.
