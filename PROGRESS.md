@@ -18,7 +18,7 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 | — | **Visual redesign** (comic world, mascot Tally, torn-paper transitions, sticky notes) | ✅ done, deployed |
 | — | Small fixes after review (0.5 s transition, doodle placement, dark bubble contrast) | ✅ done, deployed |
 | 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done, deployed |
-| 3 | **Outcomes & board** (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ✅ done & pushed (deploy status: see Deployed) |
+| 3 | **Outcomes & board** (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ✅ done, deployed |
 | 4 | viaSocket events outbox + Integrations page | planned |
 | 5 | Proof & Proof Validator (animated steps, Verified stamp, Review Queue) | planned |
 | 6 | Scores & dashboards (+ demo data) | planned |
@@ -44,9 +44,9 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 
 ## Deployed
 - **App:** `outcome-ledger` on Embarko → https://outcome-ledger.embarko.app (app id in `embarko.json`).
-- **Live version:** `0.3.1-m2-auth` (small fixes + Milestone 2), built from commit `c21a101`. Verified on the real URL: landing 200, `/api/health` ok (production), `/admin/signup` is a real form, torn transition measured at ~520 ms, admin sign-up works, and **the account survives a real restart** (uptime reset to 4 s, same login worked → data is in `/data/db.json`). Bundle hashes matched the local build.
-- **Milestone 3** is pushed but **not live until the redeploy below is confirmed** (see "Next").
-  ⚠ Auth + outcome data live in `/data/db.json` on Embarko — not backed up (see Decisions). A "Live Test Co" workspace from my verification exists on the live app.
+- **Live version:** `0.4.2-m3-board` (Milestone 3 on top of Milestone 2 + the small fixes), built from commit `1d000fd`. Verified on the real URL: bundle hashes equal the local build (`index-CgE3iBOm.js` / `index-B6wCoKjF.css`); `/api/health` ok; a fresh employee signed up with the invite code, created 3 outcomes through the UI, the 4th was refused (409 `daily_limit`), a drag Planned → In Progress worked, the API refused Done (409 `verified_only`), the employee token got 403 on `/api/team`, no console errors; after a **forced real restart** (uptime reset) the same employee logged in and still had 3 outcomes (data in `/data/db.json`).
+  ⚠ Test data left on the live app from my verification: workspace "Live Test Co" with one admin and one employee ("Live Employee") holding 3 outcomes. Auth + outcome data are not backed up (see Decisions).
+- **Deploy gotcha (cost me two failed builds):** `deploy_app` **replaces** the whole source — every upload must contain all ~77 files, including all five stylesheets (`global`, `comic`, `landing`, `app`, `board`). A failed build never replaces the live version. Check the file list against `git ls-files` before sending.
 - **Env vars on the app** (names only; values never in the repo or chat): `JWT_SECRET`, `NODE_ENV=production`, `PUBLIC_BASE_URL`. Embarko injects `PORT`, `DATA_DIR` (`/data`), `APP_NAME`, `APP_VERSION`, `STORAGE_TOKEN`.
 - **Persistence:** only `DATA_DIR` (`/data`) survives restarts and redeploys; the rest of the disk is wiped on each redeploy. **Embarko does not back up `/data`.** Deleting the app deletes the data. `db.json` (users, workspaces, outcomes) is stored there.
 - **Platform limits:** 256 MB RAM; no WebSockets, background workers, multiple processes or managed DB. Node 22.23.4.
@@ -128,6 +128,5 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 - Real viaSocket/Slack/Sheets/M91 delivery can't be tested until you paste your URLs/keys into the Integrations page (never committed).
 
 ## Next
-1. **Redeploy Milestone 3** to Embarko and verify on the real URL (health, bundle hashes, create 3 outcomes, 4th refused, drag, restart persistence); update "Deployed".
-2. **Milestone 4 — viaSocket events outbox + Integrations page:** persisted outbox (survives restart, 3 attempts with backoff), `task.created` / `task.status_changed` events, masked events-flow URL, "Send test event", activity log, SSRF guard (https only, no private addresses). Tests against a local mock endpoint.
-3. Then milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).
+1. **Milestone 4 — viaSocket events outbox + Integrations page:** persisted outbox (survives restart, 3 attempts with backoff), `task.created` / `task.status_changed` events, masked events-flow URL, "Send test event", activity log, SSRF guard (https only, no private addresses). Tests against a local mock endpoint.
+2. Then milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).
