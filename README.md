@@ -3,7 +3,7 @@
 A daily task manager that measures the **value** of work, not the number of tasks.
 Stack: React + Vite, Framer Motion, dnd-kit, Node/Express, JSON-file storage, JWT auth.
 
-> **Status:** milestone 1 of 10 (scaffold & landing). See the roadmap below.
+> **Status:** milestone 1 (scaffold & landing) and the **Visual redesign** are done. Milestone 2 (auth) is next. See the roadmap below.
 
 ## Quick start
 
@@ -52,6 +52,7 @@ Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in
 ## Roadmap
 
 1. ✅ Scaffold & landing
+1b. ✅ Visual redesign (comic world, mascot Tally, torn-paper transitions)
 2. Auth & roles
 3. Outcomes & board (+ deployable `npm start`)
 4. viaSocket events outbox + Integrations page
@@ -61,6 +62,13 @@ Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in
 8. Polish & hardening
 9. Deploy
 10. M91 alerts
+
+## Design system (comic world)
+
+Reusable pieces in `client/src/components` — use these on every new page:
+`Mascot` (Tally, 6 moods), `TornTransition` (route rip), `StickerCard`, `SquishyButton` (squash & stretch + `burst="POW!"`), `OneLiner` / `lib/lines.js` (microcopy, `playful` vs `calm` tone), `SpeechBubble`, `StickyNote` (kanban card), `EmptyState`, `Marquee`, `Squiggle`, `Confetti`, `Ambient` (clouds/stars/doodles + parallax), `CursorTrail`.
+Pages declare their loudness with `usePageVibe('lively' | 'calm', 'playful' | 'calm')`; data-heavy pages (dashboard, board, tables) must use `'calm'`.
+Rules: animate `transform`/`opacity` only, cap particle counts, pause everything in hidden tabs (`html[data-hidden]`).
 
 ## Accessibility & motion
 
