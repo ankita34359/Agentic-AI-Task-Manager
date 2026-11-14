@@ -39,6 +39,16 @@ All configuration is via environment variables (see `.env.example`; copy to `.en
 
 Webhook URLs, API keys and tokens are entered in the admin UI and stored only inside `DATA_DIR` — never in the repo.
 
+## Deploying (Embarko)
+
+Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in `embarko.json`).
+
+- **Build / start:** Embarko runs `npm install`, `npm run build`, then `npm start`. It injects `PORT` and `DATA_DIR` (`/data`).
+- **Env vars to set on the app** (never commit them): `JWT_SECRET` (≥ 32 chars), `NODE_ENV=production`, `PUBLIC_BASE_URL`.
+  Env vars saved *before the first deploy finishes* are only picked up by the next deploy — run `apply_env_vars` (or redeploy) after setting them.
+- **Persistence:** only `DATA_DIR` survives restarts and redeploys. Everything else on disk is wiped on each redeploy, and Embarko does **not** back up `DATA_DIR`.
+- **Limits:** 256 MB RAM, no WebSockets / background workers / multiple processes.
+
 ## Roadmap
 
 1. ✅ Scaffold & landing
