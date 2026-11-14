@@ -244,6 +244,17 @@
   bottom: -12px;
   transform: rotate(45deg) skew(8deg, 8deg);
 }
+/* Dark theme: a cream bubble with ink text pops hard off the navy page (~15:1 contrast). */
+:root[data-theme='dark'] .bubble {
+  background: #fffaf0;
+  color: var(--ink-fixed);
+  border-color: var(--ink-fixed);
+  box-shadow: 5px 6px 0 rgba(0, 0, 0, 0.6);
+}
+:root[data-theme='dark'] .bubble::after {
+  background: #fffaf0;
+  border-color: var(--ink-fixed);
+}
 .bubble--left::after {
   left: -12px;
   top: 20px;
@@ -929,6 +940,22 @@
 }
 .amb-doodle {
   filter: none;
+}
+/* Keep doodles out from behind headline text (see Ambient.jsx): none on narrow screens,
+   left-gutter ones only when the gutter is wide enough to hold them. */
+@media (max-width: 960px) {
+  .amb-doodle-wrap {
+    display: none;
+  }
+}
+@media (max-width: 1279px) {
+  .amb-doodle-wrap--l {
+    display: none;
+  }
+}
+.amb-doodle-wrap--l svg {
+  width: 42px;
+  height: 42px;
 }
 @keyframes floaty {
   from {

@@ -15,17 +15,21 @@ const STARS = [
   { left: '8%', top: '14%', s: 26, color: 'var(--y)' },
   { left: '88%', top: '10%', s: 20, color: 'var(--cyan)' },
   { left: '72%', top: '46%', s: 16, color: 'var(--pink)', extra: true },
-  { left: '3%', top: '66%', s: 22, color: 'var(--cyan)', extra: true },
+  { left: '1%', top: '60%', s: 20, color: 'var(--cyan)', extra: true },
   { left: '93%', top: '72%', s: 24, color: 'var(--y)' },
   { left: '46%', top: '88%', s: 18, color: 'var(--pink)', extra: true },
 ];
+// Doodles must never sit behind page text. Rules (enforced in CSS, checked by a browser test):
+//  - 'l' doodles live in the left gutter, outside the content column, and only show on wide screens (>= 1280px)
+//  - 'r' doodles live in the right half (artwork side), where there is no headline
+//  - nothing shows below 961px, where the single-column headline spans the whole width
 const DOODLES = [
-  { kind: 'squiggle', left: '4%', top: '34%', rot: -8 },
-  { kind: 'spiral', left: '90%', top: '30%', rot: 10 },
-  { kind: 'bolt', left: '24%', top: '80%', rot: 14, extra: true },
-  { kind: 'heart', left: '80%', top: '86%', rot: -10, extra: true },
-  { kind: 'plus', left: '60%', top: '8%', rot: 12 },
-  { kind: 'ring', left: '53%', top: '5%', rot: 0, extra: true },
+  { kind: 'squiggle', side: 'l', left: '0.5%', top: '15%', rot: -8 },
+  { kind: 'bolt', side: 'l', left: '0.5%', top: '74%', rot: 14, extra: true },
+  { kind: 'spiral', side: 'r', left: '92%', top: '30%', rot: 10 },
+  { kind: 'heart', side: 'r', left: '80%', top: '88%', rot: -10, extra: true },
+  { kind: 'plus', side: 'r', left: '66%', top: '9%', rot: 12 },
+  { kind: 'ring', side: 'r', left: '55%', top: '4%', rot: 0, extra: true },
 ];
 
 function Cloud() {
@@ -94,7 +98,7 @@ export default function Ambient() {
         {DOODLES.map((d, i) => (
           <span
             key={i}
-            className={`amb-doodle-wrap${d.extra ? ' amb-extra' : ''}`}
+            className={`amb-doodle-wrap amb-doodle-wrap--${d.side}${d.extra ? ' amb-extra' : ''}`}
             style={{ left: d.left, top: d.top, '--rot': `${d.rot}deg`, '--d': `${9 + i * 1.6}s`, animationDelay: `${-i * 1.7}s` }}
           >
             <Doodle kind={d.kind} />
