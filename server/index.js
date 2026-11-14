@@ -1,13 +1,16 @@
 import { loadConfig } from './config.js';
 import { createApp } from './app.js';
-import { runShutdownHooks } from './lifecycle.js';
+import { JsonDb } from './db.js';
+import { onShutdown, runShutdownHooks } from './lifecycle.js';
 
 const config = loadConfig();
-const app = createApp(config);
+const db = JsonDb.open(config.dbFile);
+onShutdown(() => db.flush()); // a redeploy (SIGTERM) must never truncate db.json
+const app = createApp(config, { db });
 
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`Outcome Ledger listening on http://0.0.0.0:${config.port} (${config.isProd ? 'production' : 'development'})`);
-  console.log(`Data directory: ${config.dataDir}`);
+  console.log(`Data directory: ${config.dataDir} (${db.data.users.length} users, ${db.data.workspaces.length} workspaces)`);
 });
 
 let closing = false;
