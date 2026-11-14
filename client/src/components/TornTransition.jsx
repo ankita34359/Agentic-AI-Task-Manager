@@ -1,7 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { pickLine } from '../lib/lines.js';
+
+/**
+ * The URL the browser is really at. While the sheet covers a page change, the OLD page stays mounted under
+ * <Routes location={shown}>, and React Router makes useLocation() report THAT page's location in there —
+ * so anything that must know where the user is actually heading (route guards) reads this instead.
+ */
+const RealPathContext = createContext(null);
+export const useRealPathname = () => {
+  const real = useContext(RealPathContext);
+  const fallback = useLocation().pathname;
+  return real ?? fallback;
+};
 
 /**
  * Torn-paper route transition.
@@ -39,6 +51,10 @@ const COVER = { duration: 0.22, ease: [0.65, 0, 0.35, 1] };
 const REVEAL = { duration: 0.26, ease: [0.65, 0, 0.35, 1] };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+// Moving between tabs inside the signed-in areas swaps instantly (the page still fades in);
+// the rip is reserved for bigger jumps, so working screens never get torn up on every click.
+const sectionOf = (p) => (p.startsWith('/admin/') && p !== '/admin/signup' ? 'admin' : p === '/app' || p.startsWith('/app/') ? 'app' : p);
+
 export default function TornTransition({ children }) {
   const location = useLocation();
   const reduced = useReducedMotion();
@@ -59,7 +75,7 @@ export default function TornTransition({ children }) {
 
   useEffect(() => {
     if (location.key === shown.key) return;
-    if (reduced) {
+    if (reduced || sectionOf(location.pathname) === sectionOf(shown.pathname)) {
       setShown(location);
       window.scrollTo(0, 0);
       return;
@@ -81,7 +97,7 @@ export default function TornTransition({ children }) {
 
   return (
     <>
-      {children(shown)}
+      <RealPathContext.Provider value={location.pathname}>{children(shown)}</RealPathContext.Provider>
       {active && (
         <motion.div className="torn" style={{ x }} aria-hidden="true">
           <div className="torn__layer torn__ink" style={{ clipPath: INK }} />
