@@ -1,0 +1,22 @@
+# dependencies & build output
+node_modules/
+dist/
+client/dist/
+.vite/
+coverage/
+
+# secrets & local config — NEVER commit
+.env
+.env.*
+!.env.example
+
+# runtime data (db.json, uploads, dev JWT secret) — location is set by DATA_DIR
+server/data/
+data/
+uploads/
+*.db.json
+
+# logs & OS junk
+*.log
+npm-debug.log*
+.DS_Store

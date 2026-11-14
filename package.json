@@ -1,0 +1,32 @@
+{
+  "name": "outcome-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Outcome Ledger — a daily task manager that measures the value of work, not the number of tasks.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite client",
+    "build": "vite build client",
+    "start": "node scripts/start.js",
+    "test": "node --test \"server/**/*.test.js\""
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.3.0",
+    "compression": "^1.8.2",
+    "express": "^5.3.0",
+    "framer-motion": "^14.14.0",
+    "helmet": "^8.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5",
+    "vite": "^8.3.8"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}
