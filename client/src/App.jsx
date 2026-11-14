@@ -20,6 +20,7 @@ import AdminSignup from './pages/auth/AdminSignup.jsx';
 import EmployeeSignup from './pages/auth/EmployeeSignup.jsx';
 import AdminOverview from './pages/admin/AdminOverview.jsx';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard.jsx';
+import Integrations from './pages/admin/Integrations.jsx';
 import Board from './pages/employee/board/Board.jsx';
 import { useHiddenFlag } from './lib/hooks.js';
 
@@ -65,7 +66,7 @@ function Shell() {
               <Route path="overview" element={<AdminOverview />} />
               <Route path="team" element={<ComingSoon title="Team" milestone={6}>Scores per employee, plus a detail page for each person.</ComingSoon>} />
               <Route path="review" element={<ComingSoon title="Review Queue" milestone={5}>Escalated proofs wait here for your Approve / Needs rework.</ComingSoon>} />
-              <Route path="integrations" element={<ComingSoon title="Integrations" milestone={4}>viaSocket flow URLs, test buttons and the activity log.</ComingSoon>} />
+              <Route path="integrations" element={<Integrations />} />
             </Route>
 
             <Route

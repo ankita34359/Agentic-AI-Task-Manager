@@ -3,7 +3,7 @@
 A daily task manager that measures the **value** of work, not the number of tasks.
 Stack: React + Vite, Framer Motion, dnd-kit, Node/Express, JSON-file storage, JWT auth.
 
-> **Status:** milestones 1–3 (scaffold, auth & roles, outcomes & board) and the **Visual redesign** are done. Milestone 4 (viaSocket events outbox) is next. See `PROGRESS.md` for decisions and what is deployed.
+> **Status:** milestones 1–4 (scaffold, auth & roles, outcomes & board, events outbox) and the **Visual redesign** are done. Milestone 4 (viaSocket events outbox + Integrations) is done; Milestone 5 (proof & validator) is next. See `PROGRESS.md` for decisions and what is deployed.
 
 ## Quick start
 
@@ -31,6 +31,7 @@ Browser end-to-end test (optional, needs Playwright and a built client):
 npm run build
 NODE_PATH=$(npm root -g) node e2e/auth.e2e.cjs   # or: npm i -D playwright
 NODE_PATH=$(npm root -g) node e2e/board.e2e.cjs  # outcomes + kanban
+NODE_PATH=$(npm root -g) node e2e/integrations.e2e.cjs  # events outbox + Integrations page
 ```
 
 ## Configuration
@@ -44,6 +45,7 @@ All configuration is via environment variables (see `.env.example`; copy to `.en
 | `DATA_DIR` | `./server/data` | Where `db.json`, `uploads/` and the dev JWT secret live. Relative paths resolve against the project root. **Point at a persistent volume in production.** |
 | `JWT_SECRET` | *(dev: auto-generated)* | Required in production, ≥ 32 chars |
 | `PUBLIC_BASE_URL` | – | Public URL of the deployment (used for the M91 callback later) |
+| `ALLOW_PRIVATE_WEBHOOKS` | off | `1` lets the events URL be a local http mock. **Ignored in production.** Tests/dev only. |
 
 Webhook URLs, API keys and tokens are entered in the admin UI and stored only inside `DATA_DIR` — never in the repo.
 
@@ -63,7 +65,7 @@ Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in
 1b. ✅ Visual redesign (comic world, mascot Tally, torn-paper transitions)
 2. ✅ Auth & roles
 3. ✅ Outcomes & board (+ deployable `npm start`)
-4. viaSocket events outbox + Integrations page
+4. ✅ viaSocket events outbox + Integrations page
 5. Proof & Proof Validator
 6. Scores & dashboards
 7. AI-flow adapter & Weekly Review

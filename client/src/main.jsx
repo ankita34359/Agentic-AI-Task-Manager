@@ -9,6 +9,7 @@ import './styles/comic.css';
 import './styles/landing.css';
 import './styles/app.css';
 import './styles/board.css';
+import './styles/integrations.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

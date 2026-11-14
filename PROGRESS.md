@@ -2,7 +2,7 @@
 
 Living status file. **Update it at the end of every milestone** (done / decisions / deployed / next), in the same push as the milestone.
 
-_Last updated: end of Milestone 3 (Outcomes & board)._
+_Last updated: end of Milestone 4 (viaSocket events outbox + Integrations page)._
 
 ## Working agreements
 - Work on branch `claude/vigilant-cray-88il2r`. Small commits. Stop after each milestone and show how to test it.
@@ -19,7 +19,7 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 | — | Small fixes after review (0.5 s transition, doodle placement, dark bubble contrast) | ✅ done, deployed |
 | 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done, deployed |
 | 3 | **Outcomes & board** (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ✅ done, deployed |
-| 4 | viaSocket events outbox + Integrations page | planned |
+| 4 | **viaSocket events outbox + Integrations page** | ✅ done & pushed (deploy status: see Deployed) |
 | 5 | Proof & Proof Validator (animated steps, Verified stamp, Review Queue) | planned |
 | 6 | Scores & dashboards (+ demo data) | planned |
 | 7 | AI-flow adapter & Weekly Review | planned |
@@ -40,7 +40,12 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
   - **51 server tests** now (19 new in `server/tasks.test.js`), mutation-checked: allowing Done, removing the limit, and ignoring the timezone each make tests fail.
   - Client: `/app/board` (`pages/employee/board/`): outcome form + live Coach (Tally reacts), 3-pip daily meter, kanban of sticky notes (dnd-kit: mouse, delayed touch, keyboard Space/←/→), **"Move to…" native select on every note** (the mobile/keyboard path), proof dialog placeholder, friendly empty/limit states, columns swipe with snap on phones.
   - `e2e/board.e2e.cjs` (35 checks: coach, form errors, 3/day + server 409, drag, persistence, menu, Done refused/proof dialog, keyboard, admin guard, light/reduced-motion/mobile).
-- **Nothing else yet**: no integrations, no proof/validator, no scores.
+- **Milestone 4 — events outbox + Integrations (events part):**
+  - Server: `lib/netguard.js` (SSRF guard), `lib/events.js` (flat payload + field reference), `outbox.js` (persistent outbox, 3 attempts, backoff, attempt log), `routes/integrations.js` (admin only: `GET /api/integrations`, `PUT|DELETE /api/integrations/events`, `POST /api/integrations/events/test`). Task create / status change enqueue `task.created` / `task.status_changed`.
+  - **69 server tests** (18 new in `server/integrations.test.js`, run against a local mock endpoint). Mutation-checked: removing the private-IP block, allowing http, removing the 3-attempt cap, and leaking the URL into the log each make tests fail.
+  - Client: `/admin/integrations`: events-URL field (masked once saved, Replace/Remove), "Send test event", activity-log table, field reference, copyable Google Sheet header row and two Slack templates, disabled AI-flow and M91 placeholders.
+  - `e2e/integrations.e2e.cjs` (29 checks, includes the real 3-attempt backoff, masking, copy buttons, employee guard, mobile, reduced motion).
+- **Nothing else yet**: no proof/validator, no scores.
 
 ## Deployed
 - **App:** `outcome-ledger` on Embarko → https://outcome-ledger.embarko.app (app id in `embarko.json`).
@@ -107,6 +112,16 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 - Tab changes inside the admin/employee areas swap instantly (no rip); the torn-paper transition is for bigger jumps.
 - Signed-in areas use the calm vibe (admin also the calm tone); public/auth pages stay lively.
 
+### Milestone 4 decisions
+- **Where it's stored:** the events URL lives in `workspace.integrations.eventsFlowUrl` inside `DATA_DIR/db.json` (gitignored, in `/data` on Embarko). The pending outbox (`db.outbox`) and the attempt log (`db.activity`, newest 1000) live there too. **The URL is a secret:** the API only ever returns `https://<host>/••••••••`; the outbox and log never contain it (test-enforced: a token planted in the URL must not appear in any response, log row or outbox entry).
+- **Payload** (flat, strings/numbers only): `event, taskId, title, owner, status, impact, deadline, at, text`. Events: `task.created`, `task.status_changed`, `test.ping` (`task.verdict` joins in M5). `text` is a ready Slack line.
+- **Delivery:** up to **3 attempts**, waits of 3 s then 15 s between them, 8 s timeout, redirects are **not** followed (a 3xx is a failure), 2xx = delivered. Each attempt is logged as attempt n/3 + HTTP status (or `network` / `timeout` / `redirect` / `blocked`). Pending retries survive a restart/redeploy (they're in db.json; the process resumes them on start). If the URL is removed, queued events are dropped and logged `no_url`. No URL configured → nothing is queued at all.
+- **Ordering caveat:** events are sent one at a time in queue order, but a retry can land after a later event; each payload carries `at` so the sheet can be sorted.
+- **SSRF guard:** https only, no credentials in the URL, no `localhost`/`.local`/`.internal`/single-label hosts, no IP literal in private/loopback/link-local/CGNAT/multicast/reserved ranges (v4 and v6, incl. IPv4-mapped and decimal/hex forms), and hostnames are **resolved and every address checked when saving *and again at connect time*** (defeats DNS rebinding). `ALLOW_PRIVATE_WEBHOOKS=1` (dev/test only, ignored in production) allows a local http mock.
+- "Send test event" is one immediate attempt (logged as 1/1), rate-limited to 20/min per IP.
+- Events sent for outcomes created by an employee go to **their own workspace's** URL only.
+- Not covered by M4 (as planned): Slack/Sheets delivery itself is configured in viaSocket; I can only verify against a mock until you paste a real URL.
+
 ### Milestone 3 decisions
 - **Status ids:** `planned`, `in_progress`, `in_review`, `done`. The server state machine (`checkEmployeeMove`) allows only Planned ⇄ In Progress for employees. In Review is reachable **only** by submitting proof (M5), Done **only** by validator-verify or admin approve (M5), In Review → In Progress only by validator "ask"/admin "needs rework" (M5, `reworkCount++`). Employees can never write Done. Cards in In Review/Done are frozen (not draggable, menu disabled). Dropping a note on the same column is a harmless no-op.
 - **Daily limit:** 3 new outcomes per employee per *local* day, using the `tzOffset` stored at sign-up (minutes east of UTC). Deleted outcomes don't exist yet, so nothing can be "un-counted". Count + insert have no `await` between them, so racing requests can't take a 4th slot (tested with 8 parallel requests). Refusal is `409 {error:'daily_limit', limit}`.
@@ -121,12 +136,11 @@ _Last updated: end of Milestone 3 (Outcomes & board)._
 - **No backups yet:** Embarko doesn't back up `/data`; the Export backup button is scheduled for milestone 8 (see Decisions). Until then a deleted app or lost volume means lost data.
 - **Browser e2e isn't in CI/`npm test`** (needs Playwright); run `e2e/auth.e2e.cjs` by hand after changing auth/guards/transitions.
 - **SSE for the live activity feed (milestone 6):** Embarko doesn't support WebSockets; plain SSE is untested there → fall back to polling if it misbehaves.
-- **Outbox retries run in-process timers (milestone 4):** "background workers" are unsupported on Embarko; pending retries are persisted so a restart doesn't lose them.
+- **Outbox retries run in an in-process timer:** "background workers" are unsupported on Embarko; pending retries are persisted so a restart doesn't lose them. If the container sleeps/idles, retries resume on the next wake-up.
 - **M91 prerequisites:** a public `PUBLIC_BASE_URL` (now available), M91 send link, and ideally M91's signature details.
 - **viaSocket:** I couldn't find viaSocket-specific Google Sheets / Slack step docs; the README will document the flat event fields generically and you wire those two steps.
 - Embarko adds its own badge to the page and overrides the CSP header.
 - Real viaSocket/Slack/Sheets/M91 delivery can't be tested until you paste your URLs/keys into the Integrations page (never committed).
 
 ## Next
-1. **Milestone 4 — viaSocket events outbox + Integrations page:** persisted outbox (survives restart, 3 attempts with backoff), `task.created` / `task.status_changed` events, masked events-flow URL, "Send test event", activity log, SSRF guard (https only, no private addresses). Tests against a local mock endpoint.
-2. Then milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).
+1. Milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).
