@@ -6,10 +6,13 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Optional local .env (gitignored). Real environment variables always win.
-try {
-  process.loadEnvFile(path.join(ROOT, '.env'));
-} catch (err) {
-  if (err.code !== 'ENOENT') throw err;
+// (process.loadEnvFile needs Node >= 20.12; hosts that run older Node simply rely on real env vars.)
+if (typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile(path.join(ROOT, '.env'));
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
 }
 
 function parsePort(value) {
