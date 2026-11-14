@@ -20,6 +20,7 @@ export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env =
   const db = JsonDb.open(config.dbFile);
   const app = createApp(config, { db, limits });
   const server = app.listen(0, '127.0.0.1');
+  server.unref(); // a failing assertion before close() must not leave the test process hanging
   await new Promise((r) => server.once('listening', r));
   const base = `http://127.0.0.1:${server.address().port}`;
 

@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
  *  - writes are serialized and coalesced: many commits in a burst become one or two disk writes
  *  - a corrupt db.json is never overwritten: startup fails loudly and points at the .bak copy
  */
-const EMPTY = () => ({ version: 1, workspaces: [], users: [] });
+const EMPTY = () => ({ version: 1, workspaces: [], users: [], tasks: [] });
 
 export class JsonDb {
   constructor(file) {
@@ -112,6 +112,12 @@ export class JsonDb {
   }
   workspaceByInvite(normalizedCode) {
     return this.data.workspaces.find((w) => w.inviteCode === normalizedCode) || null;
+  }
+  taskById(id) {
+    return this.data.tasks.find((t) => t.id === id) || null;
+  }
+  tasksOfUser(userId) {
+    return this.data.tasks.filter((t) => t.ownerId === userId);
   }
   usersInWorkspace(workspaceId) {
     return this.data.users.filter((u) => u.workspaceId === workspaceId);

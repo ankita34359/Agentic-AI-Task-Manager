@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { STATUSES } from './tasks.js';
 
 const noControlChars = /^[^\u0000-\u001f\u007f]+$/;
 
@@ -56,3 +57,25 @@ export function fieldErrors(error) {
   }
   return out;
 }
+
+// ───────── outcomes ─────────
+const text = (label, min, max) =>
+  z.string({ error: `${label} is required` }).trim().min(min, min === 0 ? '' : `${label} is required`).max(max, `${label} is too long (max ${max})`).regex(/^[^\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]*$/, `${label} has invalid characters`);
+
+export const taskSchema = z.object({
+  title: text('Title', 3, 120),
+  details: text('Details', 0, 2000).optional().default(''),
+  deadline: z.string({ error: 'Deadline is required' }).regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a deadline date').refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().startsWith(s), 'That is not a real date'),
+  impact: z.number({ error: 'Impact is required' }).int('Impact is a whole number').min(1, 'Impact is 1 to 5').max(5, 'Impact is 1 to 5'),
+  criteria: z.array(text('Criterion', 3, 200)).min(1, 'Add at least one acceptance criterion').max(8, 'At most 8 criteria'),
+  proofPlan: text('How you will prove it', 3, 500),
+});
+
+export const coachSchema = z.object({
+  title: z.string().max(300).optional().default(''),
+  details: z.string().max(2000).optional().default(''),
+  criteria: z.array(z.string().max(300)).max(12).optional().default([]),
+  proofPlan: z.string().max(600).optional().default(''),
+});
+
+export const statusSchema = z.object({ status: z.enum(STATUSES, { error: 'Unknown status' }) });

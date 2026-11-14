@@ -3,6 +3,7 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { authenticate, publicUser, requireRole } from '../middleware.js';
 import { formatInvite, generateInviteCode, hashPassword, isValidInviteShape, normalizeInvite, signToken, verifyPassword } from '../lib/auth.js';
+import { taskRoutes } from './tasks.js';
 import { adminSignupSchema, employeeSignupSchema, fieldErrors, loginSchema } from '../lib/schemas.js';
 
 export const DEFAULT_LIMITS = {
@@ -107,6 +108,8 @@ export function apiRoutes({ db, config, limits = DEFAULT_LIMITS }) {
     await db.commit();
     res.json({ inviteCode: formatInvite(req.workspace.inviteCode) });
   });
+
+  r.use(taskRoutes({ db, auth }));
 
   return r;
 }
