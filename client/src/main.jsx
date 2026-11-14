@@ -7,6 +7,7 @@ import App from './App.jsx';
 import './styles/global.css';
 import './styles/comic.css';
 import './styles/landing.css';
+import './styles/app.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
