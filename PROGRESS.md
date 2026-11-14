@@ -2,7 +2,7 @@
 
 Living status file. **Update it at the end of every milestone** (done / decisions / deployed / next), in the same push as the milestone.
 
-_Last updated: after the "small fixes" round that followed the Visual redesign._
+_Last updated: end of Milestone 2 (Auth & roles)._
 
 ## Working agreements
 - Work on branch `claude/vigilant-cray-88il2r`. Small commits. Stop after each milestone and show how to test it.
@@ -17,27 +17,32 @@ _Last updated: after the "small fixes" round that followed the Visual redesign._
 | 1 | Scaffold & landing (Express + Vite, `DATA_DIR`, deployable `npm start`) | ✅ done, deployed |
 | — | **Visual redesign** (comic world, mascot Tally, torn-paper transitions, sticky notes) | ✅ done, deployed |
 | — | Small fixes after review (0.5 s transition, doodle placement, dark bubble contrast) | ✅ done & pushed, **⚠ not deployed yet** |
-| 2 | Auth & roles (admin/employee sign-up, login, invite code, guards) | ⏭ next |
-| 3 | Outcomes & board (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | planned |
+| 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done & pushed, **⚠ not deployed yet** |
+| 3 | Outcomes & board (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ⏭ next |
 | 4 | viaSocket events outbox + Integrations page | planned |
 | 5 | Proof & Proof Validator (animated steps, Verified stamp, Review Queue) | planned |
 | 6 | Scores & dashboards (+ demo data) | planned |
 | 7 | AI-flow adapter & Weekly Review | planned |
-| 8 | Polish & hardening | planned |
+| 8 | Polish & hardening (+ admin **Export backup** button, see Decisions) | planned |
 | 9 | Deploy to Embarko (first-class pass: data-loss briefing, backups decision) | planned (a working deploy already exists) |
 | 10 | M91 alerts (send, signed callback, dedupe, read-back) | planned — after deploy, needs the public URL |
 
 ### What exists today
-- **Server** (`server/`): Express 5 app, `GET /api/health`, JSON 404 for unknown `/api/*`, helmet CSP, gzip, static client + SPA fallback, graceful SIGTERM, `DATA_DIR`/`PORT`/`JWT_SECRET` config (production refuses to start without a ≥ 32-char `JWT_SECRET`). 6 `node:test` tests.
-- **Client** (`client/`): React 19 + Vite 8 + Framer Motion 14. Landing page, placeholder pages for `/login`, `/admin/signup`, `/employee/signup`, 404.
+- **Server** (`server/`): Express 5 app, helmet CSP, gzip, static client + SPA fallback, graceful SIGTERM (flushes the DB), `DATA_DIR`/`PORT`/`JWT_SECRET` config (production refuses to start without a ≥ 32-char `JWT_SECRET`).
+  - `db.js` JSON database: atomic temp-file+fsync+rename writes, serialized & coalesced, corrupt file refused (never overwritten), `.bak` copy at startup.
+  - Auth API: `POST /api/auth/admin/signup`, `POST /api/auth/employee/signup`, `GET /api/auth/invite/:code`, `POST /api/auth/login`, `GET /api/me`, `GET /api/team` (admin), `POST /api/workspace/invite/regenerate` (admin).
+  - **32 `node:test` tests** (auth, roles, tenant isolation, JWT attacks, rate limits, DB durability). Mutation-checked: deliberately breaking the role/tenant checks, the login error uniformity, password hashing and the DB write race each makes a test fail.
+- **Client** (`client/`): React 19 + Vite 8 + Framer Motion 14. Landing page, **login + both sign-up pages** (Tally reacts: thinks while submitting, cheers on success, shrugs on errors), `AuthContext` (session, `/api/me` revalidation), route guards, **admin shell** (Overview with invite code + team, plus Team/Review Queue/Integrations placeholders) and **employee shell** (Dashboard + My Board/Weekly Review placeholders), 404.
+- **Browser e2e** (`e2e/auth.e2e.cjs`, 39 checks, needs Playwright; not part of `npm test`): sign-up/login/logout flows, guards, role bounces, copy buttons, invite regeneration, persistence across a server restart + SIGTERM, mobile overflow, reduced motion.
 - **Design system** (all in `client/src/components`, documented in README): `Mascot` (Tally, 6 moods), `TornTransition`, `StickerCard`, `SquishyButton` (+ comic bursts), `OneLiner` (`lib/lines.js`, playful/calm tone), `SpeechBubble`, `StickyNote`, `EmptyState`, `Marquee`, `Squiggle`, `Confetti`, `Ambient`, `CursorTrail`, `ScoreRing`, `TrendLine`, `CountUp`, `VerifiedStamp`, toasts.
 - **Nothing else yet**: no auth, no database layer, no tasks, no integrations.
 
 ## Deployed
 - **App:** `outcome-ledger` on Embarko → https://outcome-ledger.embarko.app (app id in `embarko.json`).
 - **Live version:** `0.2.0-redesign`, built from commit `19f3d2f`. Verified live: health OK, no console errors, byte-identical build hashes to local.
-- **Not live yet:** the "small fixes" (`a2773f6`, `a7a33ab`) and docs commits after `19f3d2f`.
-  Blocked because the Embarko connector needed re-authorization in this session. → Re-authorize the connector, then redeploy.
+- **Not live yet:** the "small fixes" (`a2773f6`, `a7a33ab`) **and all of Milestone 2**.
+  Blocked: the Embarko connector was re-authorized, but connectors are only read when a session **starts**, so the tools never appeared in the session that built M2. → **Start a new session** (connector connected), then redeploy the branch head. First real deploy of the auth server on Embarko: check `/api/health`, then sign up and log in on the live URL.
+  ⚠ Auth data (users, workspaces) will live in `/data/db.json` on Embarko — not backed up (see Decisions).
 - **Env vars on the app** (names only; values never in the repo or chat): `JWT_SECRET`, `NODE_ENV=production`, `PUBLIC_BASE_URL`. Embarko injects `PORT`, `DATA_DIR` (`/data`), `APP_NAME`, `APP_VERSION`, `STORAGE_TOKEN`.
 - **Persistence:** only `DATA_DIR` (`/data`) survives restarts and redeploys; the rest of the disk is wiped on each redeploy. **Embarko does not back up `/data`.** Deleting the app deletes the data. Nothing is stored there yet.
 - **Platform limits:** 256 MB RAM; no WebSockets, background workers, multiple processes or managed DB. Node 22.23.4.
@@ -82,9 +87,25 @@ _Last updated: after the "small fixes" round that followed the Visual redesign._
 - Retired in the redesign: particles, aurora, magnetic buttons.
 - Security: strict CSP from Express (Embarko's edge overrides it with a looser one); no inline scripts (theme bootstrap is `/theme-init.js`).
 
+### Decisions from your review (after milestone 2 planning)
+- **Proof screenshots stay in `/data`** (`DATA_DIR/uploads`): private, login required, served only to authenticated same-workspace users, with a size cap (3 MB, PNG/JPEG/WebP checked by magic bytes). **Never** Embarko's public file storage. (Built in milestone 5.)
+- **Admin "Export backup" button** — built in the **polish milestone (8)**, not before. The export **omits password hashes and integration secrets** (webhook URLs, M91 link/secret, API keys).
+
+### Milestone 2 decisions
+- Email is the login and is **unique across all workspaces** (case-insensitive). One admin per workspace; the admin is created with the workspace.
+- JWT: HS256 only, 7-day expiry, claims `{sub, role, ws}`, sent as `Authorization: Bearer`, stored in `localStorage`. The server re-checks the user/role/workspace in the database on every request, so a deleted user or a forged claim is rejected even with a valid signature. No server-side token revocation (logout is client-side; tokens die at expiry or when the user is deleted).
+- bcrypt (pure-JS `bcryptjs`, cost 10; no native build needed on Embarko). Passwords 8–72 bytes (bcrypt truncates silently beyond 72, so we refuse instead).
+- Login returns the same `invalid_credentials` for unknown email and wrong password, and does a dummy bcrypt compare to keep timing similar.
+- Rate limits (per IP): failed logins 20/15 min (successes don't count), sign-ups 20/hour, invite lookups 60/15 min → HTTP 429 `rate_limited`.
+- Invite codes: 8 symbols from a look-alike-free 32-char alphabet (~1.1 trillion), shown as `ABCD-EFGH`, lookups forgive case/spaces/hyphens. Only the workspace admin ever receives the code. Regenerating kills the old one. `GET /api/auth/invite/:code` reveals only the workspace *name*.
+- API responses are `Cache-Control: no-store`.
+- Route guards are UX only; the server enforces everything. Guards read the **real** URL via `useRealPathname()` (React Router's `useLocation()` reports the *old* page while the torn sheet is mid-transition) — this fixed a 150-redirect storm and a logout that landed on `/login`.
+- Tab changes inside the admin/employee areas swap instantly (no rip); the torn-paper transition is for bigger jumps.
+- Signed-in areas use the calm vibe (admin also the calm tone); public/auth pages stay lively.
+
 ## Open questions / risks
-- **Proof screenshots storage (milestone 5):** Embarko's docs say uploads don't belong in `DATA_DIR` and recommend its file storage, but that serves files **publicly**. Plan: keep them in `DATA_DIR`, served only to authenticated same-workspace users, with a size cap. Needs your OK.
-- **No backups:** Embarko doesn't back up `/data`. Option: an admin "Export backup" button (offered, not built).
+- **No backups yet:** Embarko doesn't back up `/data`; the Export backup button is scheduled for milestone 8 (see Decisions). Until then a deleted app or lost volume means lost data.
+- **Browser e2e isn't in CI/`npm test`** (needs Playwright); run `e2e/auth.e2e.cjs` by hand after changing auth/guards/transitions.
 - **SSE for the live activity feed (milestone 6):** Embarko doesn't support WebSockets; plain SSE is untested there → fall back to polling if it misbehaves.
 - **Outbox retries run in-process timers (milestone 4):** "background workers" are unsupported on Embarko; pending retries are persisted so a restart doesn't lose them.
 - **M91 prerequisites:** a public `PUBLIC_BASE_URL` (now available), M91 send link, and ideally M91's signature details.
@@ -93,6 +114,6 @@ _Last updated: after the "small fixes" round that followed the Visual redesign._
 - Real viaSocket/Slack/Sheets/M91 delivery can't be tested until you paste your URLs/keys into the Integrations page (never committed).
 
 ## Next
-1. **Redeploy** the small fixes once the Embarko connector is re-authorized.
-2. **Milestone 2 — Auth & roles:** JSON DB layer (atomic writes, SIGTERM flush), admin sign-up (creates workspace + invite code), employee sign-up (validates invite code live), login with role redirect, JWT (7 d), bcrypt, zod validation, rate-limited auth routes, `requireRole()`, tenant isolation, role shells, replace the placeholder auth pages with real forms in the comic style. Tests: auth, tenant isolation.
+1. **Deploy** (new session so the Embarko connector loads): small fixes + Milestone 2 together; verify live sign-up/login; then update "Deployed" above.
+2. **Milestone 3 — Outcomes & board:** outcome create form (title, details, deadline, impact 1–5, acceptance criteria, "how I will prove it"), **max 3 new outcomes/day** (day boundary from the user's stored `tzOffset`), built-in **Outcome Coach** (wording check + suggested criteria while typing), task state machine (unit-tested), kanban with dnd-kit (Planned ⇄ In Progress; dropping on Done opens the proof form in milestone 5), sticky-note cards, mobile/keyboard drag paths, and `npm start` verified in production mode.
 3. Then push + redeploy, update this file, and stop for review.

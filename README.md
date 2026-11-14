@@ -3,7 +3,7 @@
 A daily task manager that measures the **value** of work, not the number of tasks.
 Stack: React + Vite, Framer Motion, dnd-kit, Node/Express, JSON-file storage, JWT auth.
 
-> **Status:** milestone 1 (scaffold & landing) and the **Visual redesign** are done. Milestone 2 (auth) is next. See the roadmap below.
+> **Status:** milestones 1–2 (scaffold, auth & roles) and the **Visual redesign** are done. Milestone 3 (outcomes & board) is next. See `PROGRESS.md` for decisions and what is deployed.
 
 ## Quick start
 
@@ -22,7 +22,14 @@ npm start        # builds automatically if client/dist is missing
 ```
 
 ```bash
-npm test         # server unit tests (node:test)
+npm test         # server tests (node:test): auth, roles, tenant isolation, database durability
+```
+
+Browser end-to-end test (optional, needs Playwright and a built client):
+
+```bash
+npm run build
+NODE_PATH=$(npm root -g) node e2e/auth.e2e.cjs   # or: npm i -D playwright
 ```
 
 ## Configuration
@@ -53,7 +60,7 @@ Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in
 
 1. ✅ Scaffold & landing
 1b. ✅ Visual redesign (comic world, mascot Tally, torn-paper transitions)
-2. Auth & roles
+2. ✅ Auth & roles
 3. Outcomes & board (+ deployable `npm start`)
 4. viaSocket events outbox + Integrations page
 5. Proof & Proof Validator
