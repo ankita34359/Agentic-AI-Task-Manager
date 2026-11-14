@@ -2,7 +2,7 @@
 
 Living status file. **Update it at the end of every milestone** (done / decisions / deployed / next), in the same push as the milestone.
 
-_Last updated: end of Milestone 2 (Auth & roles)._
+_Last updated: end of Milestone 3 (Outcomes & board)._
 
 ## Working agreements
 - Work on branch `claude/vigilant-cray-88il2r`. Small commits. Stop after each milestone and show how to test it.
@@ -16,9 +16,9 @@ _Last updated: end of Milestone 2 (Auth & roles)._
 |---|---|---|
 | 1 | Scaffold & landing (Express + Vite, `DATA_DIR`, deployable `npm start`) | ✅ done, deployed |
 | — | **Visual redesign** (comic world, mascot Tally, torn-paper transitions, sticky notes) | ✅ done, deployed |
-| — | Small fixes after review (0.5 s transition, doodle placement, dark bubble contrast) | ✅ done & pushed, **⚠ not deployed yet** |
-| 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done & pushed, **⚠ not deployed yet** |
-| 3 | Outcomes & board (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ⏭ next |
+| — | Small fixes after review (0.5 s transition, doodle placement, dark bubble contrast) | ✅ done, deployed |
+| 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done, deployed |
+| 3 | **Outcomes & board** (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ✅ done & pushed (deploy status: see Deployed) |
 | 4 | viaSocket events outbox + Integrations page | planned |
 | 5 | Proof & Proof Validator (animated steps, Verified stamp, Review Queue) | planned |
 | 6 | Scores & dashboards (+ demo data) | planned |
@@ -35,16 +35,20 @@ _Last updated: end of Milestone 2 (Auth & roles)._
 - **Client** (`client/`): React 19 + Vite 8 + Framer Motion 14. Landing page, **login + both sign-up pages** (Tally reacts: thinks while submitting, cheers on success, shrugs on errors), `AuthContext` (session, `/api/me` revalidation), route guards, **admin shell** (Overview with invite code + team, plus Team/Review Queue/Integrations placeholders) and **employee shell** (Dashboard + My Board/Weekly Review placeholders), 404.
 - **Browser e2e** (`e2e/auth.e2e.cjs`, 39 checks, needs Playwright; not part of `npm test`): sign-up/login/logout flows, guards, role bounces, copy buttons, invite regeneration, persistence across a server restart + SIGTERM, mobile overflow, reduced motion.
 - **Design system** (all in `client/src/components`, documented in README): `Mascot` (Tally, 6 moods), `TornTransition`, `StickerCard`, `SquishyButton` (+ comic bursts), `OneLiner` (`lib/lines.js`, playful/calm tone), `SpeechBubble`, `StickyNote`, `EmptyState`, `Marquee`, `Squiggle`, `Confetti`, `Ambient`, `CursorTrail`, `ScoreRing`, `TrendLine`, `CountUp`, `VerifiedStamp`, toasts.
-- **Nothing else yet**: no auth, no database layer, no tasks, no integrations.
+- **Milestone 3 — outcomes & board:**
+  - Server: `server/lib/tasks.js` (pure status state machine + daily-limit math), `server/lib/coach.js` (built-in Outcome Coach heuristics), `server/routes/tasks.js`. Endpoints (employee only): `GET /api/tasks`, `POST /api/tasks`, `POST /api/tasks/:id/status`, `POST /api/coach`.
+  - **51 server tests** now (19 new in `server/tasks.test.js`), mutation-checked: allowing Done, removing the limit, and ignoring the timezone each make tests fail.
+  - Client: `/app/board` (`pages/employee/board/`): outcome form + live Coach (Tally reacts), 3-pip daily meter, kanban of sticky notes (dnd-kit: mouse, delayed touch, keyboard Space/←/→), **"Move to…" native select on every note** (the mobile/keyboard path), proof dialog placeholder, friendly empty/limit states, columns swipe with snap on phones.
+  - `e2e/board.e2e.cjs` (35 checks: coach, form errors, 3/day + server 409, drag, persistence, menu, Done refused/proof dialog, keyboard, admin guard, light/reduced-motion/mobile).
+- **Nothing else yet**: no integrations, no proof/validator, no scores.
 
 ## Deployed
 - **App:** `outcome-ledger` on Embarko → https://outcome-ledger.embarko.app (app id in `embarko.json`).
-- **Live version:** `0.2.0-redesign`, built from commit `19f3d2f`. Verified live: health OK, no console errors, byte-identical build hashes to local.
-- **Not live yet:** the "small fixes" (`a2773f6`, `a7a33ab`) **and all of Milestone 2**.
-  Blocked: the Embarko connector was re-authorized, but connectors are only read when a session **starts**, so the tools never appeared in the session that built M2. → **Start a new session** (connector connected), then redeploy the branch head. First real deploy of the auth server on Embarko: check `/api/health`, then sign up and log in on the live URL.
-  ⚠ Auth data (users, workspaces) will live in `/data/db.json` on Embarko — not backed up (see Decisions).
+- **Live version:** `0.3.1-m2-auth` (small fixes + Milestone 2), built from commit `c21a101`. Verified on the real URL: landing 200, `/api/health` ok (production), `/admin/signup` is a real form, torn transition measured at ~520 ms, admin sign-up works, and **the account survives a real restart** (uptime reset to 4 s, same login worked → data is in `/data/db.json`). Bundle hashes matched the local build.
+- **Milestone 3** is pushed but **not live until the redeploy below is confirmed** (see "Next").
+  ⚠ Auth + outcome data live in `/data/db.json` on Embarko — not backed up (see Decisions). A "Live Test Co" workspace from my verification exists on the live app.
 - **Env vars on the app** (names only; values never in the repo or chat): `JWT_SECRET`, `NODE_ENV=production`, `PUBLIC_BASE_URL`. Embarko injects `PORT`, `DATA_DIR` (`/data`), `APP_NAME`, `APP_VERSION`, `STORAGE_TOKEN`.
-- **Persistence:** only `DATA_DIR` (`/data`) survives restarts and redeploys; the rest of the disk is wiped on each redeploy. **Embarko does not back up `/data`.** Deleting the app deletes the data. Nothing is stored there yet.
+- **Persistence:** only `DATA_DIR` (`/data`) survives restarts and redeploys; the rest of the disk is wiped on each redeploy. **Embarko does not back up `/data`.** Deleting the app deletes the data. `db.json` (users, workspaces, outcomes) is stored there.
 - **Platform limits:** 256 MB RAM; no WebSockets, background workers, multiple processes or managed DB. Node 22.23.4.
 
 ### How a redeploy works (so it is repeatable)
@@ -103,6 +107,16 @@ _Last updated: end of Milestone 2 (Auth & roles)._
 - Tab changes inside the admin/employee areas swap instantly (no rip); the torn-paper transition is for bigger jumps.
 - Signed-in areas use the calm vibe (admin also the calm tone); public/auth pages stay lively.
 
+### Milestone 3 decisions
+- **Status ids:** `planned`, `in_progress`, `in_review`, `done`. The server state machine (`checkEmployeeMove`) allows only Planned ⇄ In Progress for employees. In Review is reachable **only** by submitting proof (M5), Done **only** by validator-verify or admin approve (M5), In Review → In Progress only by validator "ask"/admin "needs rework" (M5, `reworkCount++`). Employees can never write Done. Cards in In Review/Done are frozen (not draggable, menu disabled). Dropping a note on the same column is a harmless no-op.
+- **Daily limit:** 3 new outcomes per employee per *local* day, using the `tzOffset` stored at sign-up (minutes east of UTC). Deleted outcomes don't exist yet, so nothing can be "un-counted". Count + insert have no `await` between them, so racing requests can't take a 4th slot (tested with 8 parallel requests). Refusal is `409 {error:'daily_limit', limit}`.
+- Outcome fields: title 3–120, details ≤ 2000, deadline `YYYY-MM-DD` (not before the employee's today), impact 1–5, criteria 1–8 (3–200 chars each), "how I will prove it" 3–500. Admin impact override comes in M5/M6.
+- **Outcome Coach** is heuristics only (vague phrases like "work on", weak verbs, missing number/measure, no criteria, no proof plan) plus up to 4 suggested criteria you click to add. It never blocks saving. It's `POST /api/coach` (employee only, nothing stored) so M7 can swap in the viaSocket AI flow behind the same shape.
+- Status move is `POST /api/tasks/:id/status` (the client `api` helper has no PATCH). Another employee's task id → 404 (never leaks existence); admins get 403 on the employee board endpoints.
+- **Drop on Done opens the proof dialog** (placeholder until the real proof form in milestone 5; the user's message said "milestone 4", the plan has proof in 5 — the dialog says so and the note stays in In Progress). Dropping a *Planned* note on Done/In Review is refused with a toast ("start it first").
+- Mobile/keyboard: native `<select>` "Move to…" on every note (≥ 44 px), delayed touch drag (220 ms) so scrolling still works, keyboard sensor with Space / ← / → between columns. Phones: columns swipe horizontally with scroll-snap.
+- Board uses the calm vibe (no cursor trail, ambient faded), per the design rules.
+
 ## Open questions / risks
 - **No backups yet:** Embarko doesn't back up `/data`; the Export backup button is scheduled for milestone 8 (see Decisions). Until then a deleted app or lost volume means lost data.
 - **Browser e2e isn't in CI/`npm test`** (needs Playwright); run `e2e/auth.e2e.cjs` by hand after changing auth/guards/transitions.
@@ -114,6 +128,6 @@ _Last updated: end of Milestone 2 (Auth & roles)._
 - Real viaSocket/Slack/Sheets/M91 delivery can't be tested until you paste your URLs/keys into the Integrations page (never committed).
 
 ## Next
-1. **Deploy** (new session so the Embarko connector loads): small fixes + Milestone 2 together; verify live sign-up/login; then update "Deployed" above.
-2. **Milestone 3 — Outcomes & board:** outcome create form (title, details, deadline, impact 1–5, acceptance criteria, "how I will prove it"), **max 3 new outcomes/day** (day boundary from the user's stored `tzOffset`), built-in **Outcome Coach** (wording check + suggested criteria while typing), task state machine (unit-tested), kanban with dnd-kit (Planned ⇄ In Progress; dropping on Done opens the proof form in milestone 5), sticky-note cards, mobile/keyboard drag paths, and `npm start` verified in production mode.
-3. Then push + redeploy, update this file, and stop for review.
+1. **Redeploy Milestone 3** to Embarko and verify on the real URL (health, bundle hashes, create 3 outcomes, 4th refused, drag, restart persistence); update "Deployed".
+2. **Milestone 4 — viaSocket events outbox + Integrations page:** persisted outbox (survives restart, 3 attempts with backoff), `task.created` / `task.status_changed` events, masked events-flow URL, "Send test event", activity log, SSRF guard (https only, no private addresses). Tests against a local mock endpoint.
+3. Then milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).

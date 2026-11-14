@@ -3,7 +3,7 @@
 A daily task manager that measures the **value** of work, not the number of tasks.
 Stack: React + Vite, Framer Motion, dnd-kit, Node/Express, JSON-file storage, JWT auth.
 
-> **Status:** milestones 1–2 (scaffold, auth & roles) and the **Visual redesign** are done. Milestone 3 (outcomes & board) is next. See `PROGRESS.md` for decisions and what is deployed.
+> **Status:** milestones 1–3 (scaffold, auth & roles, outcomes & board) and the **Visual redesign** are done. Milestone 4 (viaSocket events outbox) is next. See `PROGRESS.md` for decisions and what is deployed.
 
 ## Quick start
 
@@ -22,7 +22,7 @@ npm start        # builds automatically if client/dist is missing
 ```
 
 ```bash
-npm test         # server tests (node:test): auth, roles, tenant isolation, database durability
+npm test         # server tests (node:test): auth, roles, tenant isolation, database durability, status rules, daily limit
 ```
 
 Browser end-to-end test (optional, needs Playwright and a built client):
@@ -30,6 +30,7 @@ Browser end-to-end test (optional, needs Playwright and a built client):
 ```bash
 npm run build
 NODE_PATH=$(npm root -g) node e2e/auth.e2e.cjs   # or: npm i -D playwright
+NODE_PATH=$(npm root -g) node e2e/board.e2e.cjs  # outcomes + kanban
 ```
 
 ## Configuration
@@ -61,7 +62,7 @@ Live app: <https://outcome-ledger.embarko.app> (app name `outcome-ledger`, id in
 1. ✅ Scaffold & landing
 1b. ✅ Visual redesign (comic world, mascot Tally, torn-paper transitions)
 2. ✅ Auth & roles
-3. Outcomes & board (+ deployable `npm start`)
+3. ✅ Outcomes & board (+ deployable `npm start`)
 4. viaSocket events outbox + Integrations page
 5. Proof & Proof Validator
 6. Scores & dashboards

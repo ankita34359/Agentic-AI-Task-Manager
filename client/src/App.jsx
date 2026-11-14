@@ -20,6 +20,7 @@ import AdminSignup from './pages/auth/AdminSignup.jsx';
 import EmployeeSignup from './pages/auth/EmployeeSignup.jsx';
 import AdminOverview from './pages/admin/AdminOverview.jsx';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard.jsx';
+import Board from './pages/employee/board/Board.jsx';
 import { useHiddenFlag } from './lib/hooks.js';
 
 const ADMIN_NAV = [
@@ -77,7 +78,7 @@ function Shell() {
             >
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<EmployeeDashboard />} />
-              <Route path="board" element={<ComingSoon title="My Board" milestone={3}>Your kanban: Planned, In Progress, In Review, Done.</ComingSoon>} />
+              <Route path="board" element={<Board />} />
               <Route path="weekly-review" element={<ComingSoon title="Weekly Review" milestone={7}>What created value, what was busywork, and one thing to change.</ComingSoon>} />
             </Route>
 

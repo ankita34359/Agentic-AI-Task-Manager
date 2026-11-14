@@ -32,6 +32,7 @@ export class ApiError extends Error {
     this.status = status;
     this.code = body?.error || 'error';
     this.fields = body?.fields || {};
+    this.body = body || {};
   }
 }
 
