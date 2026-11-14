@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LogoMark } from './Icons.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
+import SquishyButton from './SquishyButton.jsx';
 
 export default function SiteHeader() {
   return (
@@ -11,9 +12,9 @@ export default function SiteHeader() {
           <span>Outcome Ledger</span>
         </Link>
         <div className="header-actions">
-          <Link to="/login" className="btn btn-ghost btn-sm">
+          <SquishyButton to="/login" variant="ghost" size="sm" burst="HI!">
             Log in
-          </Link>
+          </SquishyButton>
           <ThemeToggle />
         </div>
       </div>

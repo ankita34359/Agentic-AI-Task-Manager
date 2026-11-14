@@ -66,18 +66,24 @@ export const ArrowRightIcon = (p) => (
   </svg>
 );
 
+/** Tally's face as a logo. */
 export function LogoMark(props) {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" {...props}>
-      <defs>
-        <linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#8b7bff" />
-          <stop offset="1" stopColor="#22d3ee" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="16" fill="#0d1024" />
-      <circle cx="32" cy="32" r="18" fill="none" stroke="#ffffff22" strokeWidth="7" />
-      <path d="M32 14a18 18 0 1 1-17.1 12.4" fill="none" stroke="url(#logo-g)" strokeWidth="7" strokeLinecap="round" />
+      <path d="M26 14 L31 20 L42 7" fill="none" stroke="#1b1530" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M26 14 L31 20 L42 7" fill="none" stroke="#ff6fa8" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M32 17 C16 17 8 32 8 42 C8 54 18 60 32 60 C46 60 56 54 56 42 C56 32 48 17 32 17 Z"
+        fill="#4ee3a5"
+        stroke="#1b1530"
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+      <ellipse cx="23" cy="38" rx="6" ry="7" fill="#fff" stroke="#1b1530" strokeWidth="2.5" />
+      <ellipse cx="41" cy="38" rx="6" ry="7" fill="#fff" stroke="#1b1530" strokeWidth="2.5" />
+      <circle cx="24" cy="39" r="3" fill="#1b1530" />
+      <circle cx="42" cy="39" r="3" fill="#1b1530" />
+      <path d="M25 49 Q32 55 39 49" fill="none" stroke="#1b1530" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }

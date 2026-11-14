@@ -1,18 +1,23 @@
-import { Link } from 'react-router-dom';
 import PageTransition from '../components/PageTransition.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import SquishyButton from '../components/SquishyButton.jsx';
+import { usePageVibe } from '../context/VibeContext.jsx';
 
 export default function NotFound() {
+  usePageVibe('lively');
   return (
     <PageTransition className="page stub">
-      <div className="glass stub__card">
-        <span className="eyebrow">404</span>
-        <h1>That page isn’t on the board</h1>
-        <p>The link may be old, or the page hasn’t shipped yet.</p>
-        <div className="stub__actions">
-          <Link to="/" className="btn btn-primary btn-sm">
-            Back to home
-          </Link>
-        </div>
+      <div className="stub__wrap stub__wrap--narrow">
+        <EmptyState
+          mood="shrug"
+          kind="notfound"
+          title="404"
+          action={
+            <SquishyButton to="/" size="sm" burst="WHOOSH!">
+              Back to home
+            </SquishyButton>
+          }
+        />
       </div>
     </PageTransition>
   );

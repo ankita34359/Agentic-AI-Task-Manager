@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertIcon, CheckIcon, InfoIcon, XIcon } from './Icons.jsx';
+import { pickLine } from '../lib/lines.js';
+import { useVibe } from '../context/VibeContext.jsx';
 
 const ToastContext = createContext(() => {});
 const ICONS = { success: CheckIcon, error: AlertIcon, warn: AlertIcon, info: InfoIcon };
@@ -21,16 +23,19 @@ function Toast({ toast, onDismiss }) {
     <motion.div
       layout={!reduced}
       className={`toast toast-${toast.type}`}
-      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 28, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={reduced ? { opacity: 0 } : { opacity: 0, x: 60, scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+      style={{ '--tilt': `${toast.tilt}deg` }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.8, rotate: toast.tilt * 3 }}
+      animate={{ opacity: 1, y: 0, scale: 1, rotate: reduced ? 0 : toast.tilt }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, x: 80, scale: 0.9 }}
+      transition={{ type: 'spring', stiffness: 460, damping: 18 }}
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <Icon className="t-ico" />
+      <span className="toast__badge">
+        <Icon />
+      </span>
       <div>
         <strong>{toast.title}</strong>
         {toast.message && <span className="msg">{toast.message}</span>}
@@ -45,21 +50,26 @@ function Toast({ toast, onDismiss }) {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const counter = useRef(0);
+  const { tone } = useVibe();
+  const toneRef = useRef(tone);
+  toneRef.current = tone;
 
   const dismiss = useCallback((id) => setToasts((list) => list.filter((t) => t.id !== id)), []);
 
   const toast = useCallback((input) => {
     const opts = typeof input === 'string' ? { title: input } : input;
     const id = ++counter.current;
-    const item = { id, type: 'info', duration: 4500, ...opts };
+    const item = { id, type: 'info', duration: 4800, tilt: id % 2 ? -1.2 : 1, ...opts };
     setToasts((list) => [...list.slice(-(MAX_VISIBLE - 1)), item]);
     return id;
   }, []);
 
+  // Messages default to a witty line (calmer on admin pages).
   const api = useMemo(() => {
+    const line = (kind) => pickLine(kind, toneRef.current);
     const fn = (input) => toast(input);
-    fn.success = (title, message) => toast({ title, message, type: 'success' });
-    fn.error = (title, message) => toast({ title, message, type: 'error', duration: 7000 });
+    fn.success = (title, message = line('success')) => toast({ title, message, type: 'success' });
+    fn.error = (title, message = line('error')) => toast({ title, message, type: 'error', duration: 7000 });
     fn.warn = (title, message) => toast({ title, message, type: 'warn' });
     fn.info = (title, message) => toast({ title, message, type: 'info' });
     fn.dismiss = dismiss;
