@@ -34,8 +34,9 @@ const INK = tornPolygon(7, 2.4, 0);
 const FIBER = tornPolygon(7, 2.4, 0.5);
 const PAPER = tornPolygon(7, 2.4, 1.1);
 
-const COVER = { duration: 0.36, ease: [0.65, 0, 0.35, 1] };
-const REVEAL = { duration: 0.42, ease: [0.65, 0, 0.35, 1], delay: 0.1 };
+// ~0.5 s end to end: cover 0.22 + (swap, 2 frames) + reveal 0.26
+const COVER = { duration: 0.22, ease: [0.65, 0, 0.35, 1] };
+const REVEAL = { duration: 0.26, ease: [0.65, 0, 0.35, 1] };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
 export default function TornTransition({ children }) {
