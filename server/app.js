@@ -5,12 +5,15 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { JsonDb } from './db.js';
 import { apiRoutes, DEFAULT_LIMITS } from './routes/api.js';
+import { Outbox } from './outbox.js';
 
 /**
  * Build the Express app. A function of `config` (+ optional db / rate limits) so tests can create isolated instances.
  */
-export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DEFAULT_LIMITS } = {}) {
+export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DEFAULT_LIMITS, outbox = new Outbox({ db, allowPrivate: config.allowPrivateWebhooks }) } = {}) {
   const app = express();
+  app.locals.outbox = outbox;
+  outbox.start(); // picks up any retries that were pending when the process last stopped
   app.disable('x-powered-by');
   app.set('trust proxy', 1); // behind one reverse proxy / platform load balancer
 
@@ -46,7 +49,7 @@ export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DE
     res.json({ ok: true, uptime: Math.round(process.uptime()), env: config.isProd ? 'production' : 'development' });
   });
 
-  app.use('/api', apiRoutes({ db, config, limits }));
+  app.use('/api', apiRoutes({ db, config, outbox, limits }));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'not_found' });

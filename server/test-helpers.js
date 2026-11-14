@@ -4,6 +4,7 @@ import path from 'node:path';
 import { loadConfig } from './config.js';
 import { createApp } from './app.js';
 import { JsonDb } from './db.js';
+import { Outbox } from './outbox.js';
 
 export const tmpDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'ol-test-'));
 
@@ -18,7 +19,8 @@ export const OPEN_LIMITS = {
 export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env = {} } = {}) {
   const config = loadConfig({ DATA_DIR: dataDir, JWT_SECRET: 'test-secret-'.repeat(4), ...env });
   const db = JsonDb.open(config.dbFile);
-  const app = createApp(config, { db, limits });
+  const outbox = new Outbox({ db, allowPrivate: config.allowPrivateWebhooks, backoffMs: [15, 30] });
+  const app = createApp(config, { db, limits, outbox });
   const server = app.listen(0, '127.0.0.1');
   server.unref(); // a failing assertion before close() must not leave the test process hanging
   await new Promise((r) => server.once('listening', r));
@@ -43,11 +45,13 @@ export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env =
     base,
     config,
     db,
+    outbox,
     dataDir,
     call,
     get: (u, o) => call('GET', u, o),
     post: (u, body, o) => call('POST', u, { ...o, body: body ?? {} }),
     async close() {
+      outbox.stop();
       await db.flush();
       server.close();
       server.closeAllConnections?.();

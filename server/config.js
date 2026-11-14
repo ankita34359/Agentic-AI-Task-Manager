@@ -66,6 +66,8 @@ export function loadConfig(env = process.env) {
     uploadsDir,
     clientDist: path.join(ROOT, 'client', 'dist'),
     jwtSecret: resolveJwtSecret(env, isProd, dataDir),
+    // Dev/test only: lets webhook URLs point at a local mock (http, loopback). Always off in production.
+    allowPrivateWebhooks: !isProd && env.ALLOW_PRIVATE_WEBHOOKS === '1',
     publicBaseUrl: (env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, ''),
   });
 }

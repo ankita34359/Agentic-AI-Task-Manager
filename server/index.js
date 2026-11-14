@@ -7,6 +7,7 @@ const config = loadConfig();
 const db = JsonDb.open(config.dbFile);
 onShutdown(() => db.flush()); // a redeploy (SIGTERM) must never truncate db.json
 const app = createApp(config, { db });
+onShutdown(() => app.locals.outbox.stop());
 
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`Outcome Ledger listening on http://0.0.0.0:${config.port} (${config.isProd ? 'production' : 'development'})`);

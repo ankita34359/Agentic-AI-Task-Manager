@@ -4,12 +4,14 @@ import { rateLimit } from 'express-rate-limit';
 import { authenticate, publicUser, requireRole } from '../middleware.js';
 import { formatInvite, generateInviteCode, hashPassword, isValidInviteShape, normalizeInvite, signToken, verifyPassword } from '../lib/auth.js';
 import { taskRoutes } from './tasks.js';
+import { integrationRoutes } from './integrations.js';
 import { adminSignupSchema, employeeSignupSchema, fieldErrors, loginSchema } from '../lib/schemas.js';
 
 export const DEFAULT_LIMITS = {
   login: { windowMs: 15 * 60_000, limit: 20, skipSuccessful: true }, // failed logins per IP
   signup: { windowMs: 60 * 60_000, limit: 20 },
   invite: { windowMs: 15 * 60_000, limit: 60 }, // invite-code lookups per IP (the code space is huge, this is belt and braces)
+  integrations: { windowMs: 60_000, limit: 20 }, // "Send test event" clicks per IP
 };
 
 const limiter = ({ windowMs, limit, skipSuccessful }) =>
@@ -22,7 +24,7 @@ const limiter = ({ windowMs, limit, skipSuccessful }) =>
     handler: (_req, res) => res.status(429).json({ error: 'rate_limited' }),
   });
 
-export function apiRoutes({ db, config, limits = DEFAULT_LIMITS }) {
+export function apiRoutes({ db, config, outbox, limits = DEFAULT_LIMITS }) {
   const r = express.Router();
   const auth = authenticate({ db, config });
 
@@ -109,7 +111,8 @@ export function apiRoutes({ db, config, limits = DEFAULT_LIMITS }) {
     res.json({ inviteCode: formatInvite(req.workspace.inviteCode) });
   });
 
-  r.use(taskRoutes({ db, auth }));
+  r.use(taskRoutes({ db, auth, outbox }));
+  r.use(integrationRoutes({ db, auth, outbox, config, testLimiter: limiter(limits.integrations ?? DEFAULT_LIMITS.integrations) }));
 
   return r;
 }

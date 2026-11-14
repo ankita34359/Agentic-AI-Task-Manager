@@ -3,6 +3,7 @@ import express from 'express';
 import { requireRole } from '../middleware.js';
 import { checkEmployeeMove, createdToday, dailyLimitState, DAILY_LIMIT, localDayIndex } from '../lib/tasks.js';
 import { coach } from '../lib/coach.js';
+import { buildEvent } from '../lib/events.js';
 import { coachSchema, fieldErrors, statusSchema, taskSchema } from '../lib/schemas.js';
 
 // What the client may see of a task. (Proofs/verdicts join this shape in milestone 5.)
@@ -28,7 +29,7 @@ const MOVE_ERRORS = {
 };
 
 /** Employee-only outcome endpoints. Every lookup is scoped to the caller (ownerId), so another employee's task id is just a 404. */
-export function taskRoutes({ db, auth }) {
+export function taskRoutes({ db, auth, outbox }) {
   const r = express.Router();
   const employee = [auth, requireRole('employee')];
 
@@ -55,6 +56,7 @@ export function taskRoutes({ db, auth }) {
     const task = { id: crypto.randomUUID(), workspaceId: req.user.workspaceId, ownerId: req.user.id, ...parsed.data, status: 'planned', reworkCount: 0, createdAt: iso, updatedAt: iso };
     db.data.tasks.push(task);
     await db.commit();
+    outbox?.enqueue(req.user.workspaceId, buildEvent('task.created', task, req.user.name, { now }));
     res.status(201).json({ task: taskView(task), limit: dailyLimitState(db.data.tasks, req.user.id, now, tz) });
   });
 
@@ -71,9 +73,11 @@ export function taskRoutes({ db, auth }) {
       const [status, error] = MOVE_ERRORS[verdict.reason] || [409, 'move_not_allowed'];
       return res.status(status).json({ error, from: task.status, to });
     }
+    const from = task.status;
     task.status = to;
     task.updatedAt = new Date().toISOString();
     await db.commit();
+    outbox?.enqueue(req.user.workspaceId, buildEvent('task.status_changed', task, req.user.name, { from }));
     res.json({ task: taskView(task) });
   });
 
