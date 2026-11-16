@@ -2,7 +2,7 @@
 
 Living status file. **Update it at the end of every milestone** (done / decisions / deployed / next), in the same push as the milestone.
 
-_Last updated: Milestone 4 deployed and verified live (via the HTTP deploy script, no connector)._
+_Last updated: Milestone 4b (Connect Google Sheets + Slack through viaSocket) built, tested and deployed; waiting for the embed secret on the host._
 
 ## Working agreements
 - Work on branch `claude/vigilant-cray-88il2r`. Small commits. Stop after each milestone and show how to test it.
@@ -20,6 +20,7 @@ _Last updated: Milestone 4 deployed and verified live (via the HTTP deploy scrip
 | 2 | **Auth & roles** (admin/employee sign-up, login, invite code, guards, role shells) | ✅ done, deployed |
 | 3 | **Outcomes & board** (create form, 3/day limit, Outcome Coach, kanban Planned↔In Progress) | ✅ done, deployed |
 | 4 | **viaSocket events outbox + Integrations page** | ✅ done, deployed and verified live |
+| 4b | **Connect: Google Sheets + Slack through viaSocket** (Connect buttons, pickers, toggles, events → row + message) | ✅ built, tested and deployed. **Not working live until `VIASOCKET_EMBED_SECRET` is set on the host** (see Deployed) |
 | 5 | Proof & Proof Validator (animated steps, Verified stamp, Review Queue) | planned |
 | 6 | Scores & dashboards (+ demo data) | planned |
 | 7 | AI-flow adapter & Weekly Review | planned |
@@ -45,9 +46,17 @@ _Last updated: Milestone 4 deployed and verified live (via the HTTP deploy scrip
   - **69 server tests** (18 new in `server/integrations.test.js`, run against a local mock endpoint). Mutation-checked: removing the private-IP block, allowing http, removing the 3-attempt cap, and leaking the URL into the log each make tests fail.
   - Client: `/admin/integrations`: events-URL field (masked once saved, Replace/Remove), "Send test event", activity-log table, field reference, copyable Google Sheet header row and two Slack templates, disabled AI-flow and M91 placeholders.
   - `e2e/integrations.e2e.cjs` (29 checks, includes the real 3-attempt backoff, masking, copy buttons, employee guard, mobile, reduced motion).
+- **Milestone 4b — Connect (Sheets + Slack through viaSocket's apps API):**
+  - Server: `lib/viasocket.js` (plain-HTTP client of viaSocket's apps-API module: embed token, connections, enable app, option lists, run action), `connect.js` (per-workspace state, pickers, toggle, dispatcher, secret scrubbing), routes under `/api/integrations/viasocket/*` (admin only). The three env vars are `VIASOCKET_ORG_ID`, `VIASOCKET_PROJECT_ID`, `VIASOCKET_EMBED_SECRET`.
+  - **91 server tests** (22 new in `server/connect.test.js`, against a fake viaSocket). Mutation-checked: dropping the log scrubbing, leaking the auth id in the view, trusting the browser's auth id, awaiting the integration in the request, and ignoring the toggle each make a test fail.
+  - Client: two comic Connect cards (`ConnectCards.jsx`): Connect button (viaSocket popup), spreadsheet + worksheet / channel dropdowns (searchable, "Show more"), on/off switch, status chip, "Send a test row/message" and Disconnect (both ask first), missing-column-titles warning with a copy button; the Activity log has a new **Via** column and shows the reason for a failure.
+  - `e2e/connect.e2e.cjs` (41 checks, in-process fake viaSocket, popup script stubbed). The older `integrations.e2e.cjs` still passes (29).
 - **Nothing else yet**: no proof/validator, no scores.
 
 ## Deployed
+- **Live version now: `0.6.0-m4b-connect`** (M4 + M4b), deployed 2026-11-16 with the sandbox HTTP script, 85 stripped files, 248,214 bytes. **Verified on the real URL:** `index.html` references `index-BM3-CNwR.js` / `index-CZhuU63p.css` (= the local build, also equal to the unstripped source's build; both assets download); `/api/health` ok; `/api/integrations/viasocket/token` without a login → 401; in a real browser a fresh admin opened Admin → Integrations: the Events flow, Activity log and "What we send" sections render, the Connect section shows **"Needs setup"** and names only `VIASOCKET_EMBED_SECRET` (so `VIASOCKET_ORG_ID` and `VIASOCKET_PROJECT_ID` were picked up), no console errors.
+  - ⚠ **One thing left for the owner:** `VIASOCKET_EMBED_SECRET` is not set on the Embarko app. I cannot set it: the secure credential form only lets the sandbox proxy attach a value to requests, it never gives me the value, and the app needs it as an environment variable. Add it yourself: open https://embarko.ai/app → the app `outcome-ledger` → App setup → add `VIASOCKET_EMBED_SECRET` (the signing secret from viaSocket's embed Install Code), then **restart/apply**. Existing variables (`APP_BUILD`, `JWT_SECRET`, `NODE_ENV`, `PUBLIC_BASE_URL`, `STORAGE_TOKEN`) were not touched; only the two ID variables were added (merge API, per key).
+  - **UNTESTED against the real viaSocket** (needs the secret and your Google/Slack accounts): the real Connect popup and its `postMessage` shape; real option lists; the real `Add_New_Row_to_Sheet` v66 and `Send_Message` v107 calls (field shapes were taken from viaSocket's pages and a fake); whether the sheet's column options are labelled with the row-1 titles (the code matches on label or value, case-insensitively); the on-screen CSP for the popup (script/frame allowed for `flow.viasocket.com`; Embarko's edge may override CSP anyway). No real row or message has been sent anywhere.
 - **App:** `outcome-ledger` on Embarko → https://outcome-ledger.embarko.app (app id in `embarko.json`).
 - **Live version:** `0.5.1-m4-integrations` (Milestone 4: events outbox + Integrations page, on top of M3). Deployed 2026-11-16 with the HTTP script below (82 stripped files, 209,171 bytes). **Verified on the real URL:** `index.html` references `index-CAwReEj4.js` / `index--wI6-1KP.css` (the hashes of the local build; both assets download, 561,463 / 40,719 bytes); `/api/health` → `{"ok":true,"env":"production"}`; `/api/integrations` without a token → 401; in a real browser a fresh admin signed up, opened Admin → Integrations and the page rendered (Events flow “Not set”, Activity log, What we send, Google Sheet header row) with no console errors. **Not yet verified live:** saving a real events URL and “Send test event” (needs your viaSocket URL), and restart persistence of the outbox.
   ⚠ More test data on the live app from this verification: workspace "M4 Check Co" with one admin (`m4check+<timestamp>@example.com`). Earlier M3 test data ("Live Test Co") is still there too. Neither is backed up.
@@ -114,6 +123,17 @@ _Last updated: Milestone 4 deployed and verified live (via the HTTP deploy scrip
 - Tab changes inside the admin/employee areas swap instantly (no rip); the torn-paper transition is for bigger jumps.
 - Signed-in areas use the calm vibe (admin also the calm tone); public/auth pages stay lively.
 
+### Milestone 4b decisions
+- **Which viaSocket pattern:** the Curevia repo (`ankita34359/Curevia`) mounts viaSocket's embedded *flow editor* per slot and posts to the flow's run URL. Your brief (Connect buttons, `auth_id`, `script_id`, pickers, actions) matches viaSocket's newer **apps API** (`app-integrations.md`, `apps-api.md`), so I used that and reused Curevia's idea of a **server-signed embed token** behind a login-protected endpoint. The existing events URL + outbox is untouched and still works (an upgrade, not a replacement).
+- **Identity:** one viaSocket user per workspace (`unique_identifier = ol-ws-<workspaceId>`), so connections belong to the workspace, not to whichever admin clicked.
+- **Where secrets live:** `auth_id` and `script_id` are stored only in `DATA_DIR/db.json` under `workspace.integrations.connect.{sheets,slack}`. They are never in a response, the page, the activity log or an error (test-enforced with planted values; errors and log details go through `scrub()`). The only value the browser holds is the per-workspace embed token (viaSocket's rule), served from `GET /api/integrations/viasocket/token` (admin only). The browser only *names* an auth id after the popup; the server accepts it only if viaSocket lists it for that workspace.
+- **Pickers** (from viaSocket's `listOptions` on the pinned actions): spreadsheet `spreadsheet_Id`, worksheet `grid_Id` (after the spreadsheet), Slack channel `destination.channel_id`. Chosen once after connecting and stored; the toggle is disabled until the target is complete.
+- **Sheet columns:** row 1 of the worksheet must contain the nine titles `event, taskId, title, owner, status, impact, deadline, at, text` (the page has the copy button). On saving a worksheet the server reads its column list from viaSocket and maps our nine fields to the option values; if any is missing the missing names are shown and the toggle stays off. Rows are sent with `column_key: true`.
+- **Events:** after a task is saved (create, status change) `connect.dispatch()` runs, never awaited, never throws. One attempt per app (no retry); the result goes to the Activity log (`via` = `sheets` / `slack`, failures with a scrubbed reason). Apps that are off or not set up send nothing and log nothing. Slack posts the same ready-made `text` line as the events URL.
+- **CSP:** `script-src` and `frame-src`/`connect-src` now also allow `https://flow.viasocket.com` (the Connect popup script).
+- **Send test** buttons write one real row/message, so they ask first ("This writes one real row…"). I have not pressed them.
+- Not done on purpose: no progress events were sent to viaSocket's journey endpoint (the skill suggests them; nobody asked for telemetry).
+
 ### Milestone 4 decisions
 - **Where it's stored:** the events URL lives in `workspace.integrations.eventsFlowUrl` inside `DATA_DIR/db.json` (gitignored, in `/data` on Embarko). The pending outbox (`db.outbox`) and the attempt log (`db.activity`, newest 1000) live there too. **The URL is a secret:** the API only ever returns `https://<host>/••••••••`; the outbox and log never contain it (test-enforced: a token planted in the URL must not appear in any response, log row or outbox entry).
 - **Payload** (flat, strings/numbers only): `event, taskId, title, owner, status, impact, deadline, at, text`. Events: `task.created`, `task.status_changed`, `test.ping` (`task.verdict` joins in M5). `text` is a ready Slack line.
@@ -145,4 +165,5 @@ _Last updated: Milestone 4 deployed and verified live (via the HTTP deploy scrip
 - Real viaSocket/Slack/Sheets/M91 delivery can't be tested until you paste your URLs/keys into the Integrations page (never committed).
 
 ## Next
+0. **You:** add `VIASOCKET_EMBED_SECRET` on the Embarko app, then try Connect on the live Integrations page (say when, and I will watch; real rows/messages go to your Sheet/Slack).
 1. Milestone 5 (proof & validator; the Done-drop dialog becomes the real proof form).
