@@ -5,6 +5,8 @@ import { loadConfig } from './config.js';
 import { createApp } from './app.js';
 import { JsonDb } from './db.js';
 import { Outbox } from './outbox.js';
+import { Connect } from './connect.js';
+import { createViaSocket } from './lib/viasocket.js';
 
 export const tmpDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'ol-test-'));
 
@@ -16,11 +18,12 @@ export const OPEN_LIMITS = {
 };
 
 /** Boots the real app on a random port with an isolated DATA_DIR. */
-export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env = {} } = {}) {
+export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env = {}, via } = {}) {
   const config = loadConfig({ DATA_DIR: dataDir, JWT_SECRET: 'test-secret-'.repeat(4), ...env });
   const db = JsonDb.open(config.dbFile);
   const outbox = new Outbox({ db, allowPrivate: config.allowPrivateWebhooks, backoffMs: [15, 30] });
-  const app = createApp(config, { db, limits, outbox });
+  const connect = new Connect({ db, via: via ?? createViaSocket(config.viasocket) });
+  const app = createApp(config, { db, limits, outbox, connect });
   const server = app.listen(0, '127.0.0.1');
   server.unref(); // a failing assertion before close() must not leave the test process hanging
   await new Promise((r) => server.once('listening', r));
@@ -46,6 +49,7 @@ export async function startApp({ limits = OPEN_LIMITS, dataDir = tmpDir(), env =
     config,
     db,
     outbox,
+    connect,
     dataDir,
     call,
     get: (u, o) => call('GET', u, o),

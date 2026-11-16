@@ -29,7 +29,7 @@ const MOVE_ERRORS = {
 };
 
 /** Employee-only outcome endpoints. Every lookup is scoped to the caller (ownerId), so another employee's task id is just a 404. */
-export function taskRoutes({ db, auth, outbox }) {
+export function taskRoutes({ db, auth, outbox, connect }) {
   const r = express.Router();
   const employee = [auth, requireRole('employee')];
 
@@ -56,7 +56,9 @@ export function taskRoutes({ db, auth, outbox }) {
     const task = { id: crypto.randomUUID(), workspaceId: req.user.workspaceId, ownerId: req.user.id, ...parsed.data, status: 'planned', reworkCount: 0, createdAt: iso, updatedAt: iso };
     db.data.tasks.push(task);
     await db.commit();
-    outbox?.enqueue(req.user.workspaceId, buildEvent('task.created', task, req.user.name, { now }));
+    const created = buildEvent('task.created', task, req.user.name, { now });
+    outbox?.enqueue(req.user.workspaceId, created);
+    connect?.dispatch(req.user.workspaceId, created); // after the save; never awaited, never throws
     res.status(201).json({ task: taskView(task), limit: dailyLimitState(db.data.tasks, req.user.id, now, tz) });
   });
 
@@ -77,7 +79,9 @@ export function taskRoutes({ db, auth, outbox }) {
     task.status = to;
     task.updatedAt = new Date().toISOString();
     await db.commit();
-    outbox?.enqueue(req.user.workspaceId, buildEvent('task.status_changed', task, req.user.name, { from }));
+    const moved = buildEvent('task.status_changed', task, req.user.name, { from });
+    outbox?.enqueue(req.user.workspaceId, moved);
+    connect?.dispatch(req.user.workspaceId, moved); // after the save; never awaited, never throws
     res.json({ task: taskView(task) });
   });
 

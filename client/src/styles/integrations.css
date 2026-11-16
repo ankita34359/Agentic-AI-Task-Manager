@@ -176,3 +176,178 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ───────── Connect cards (Google Sheets / Slack through viaSocket) ───────── */
+.connect-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(22px, 3vw, 34px);
+  align-items: start;
+  margin-bottom: clamp(22px, 3vw, 34px);
+}
+.connect-card__band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: var(--lw) solid var(--ink-fixed);
+  color: var(--ink-fixed);
+}
+.connect-card__band--sheets {
+  background: var(--mint);
+}
+.connect-card__band--slack {
+  background: var(--pink);
+}
+.connect-card__band .card-title {
+  flex: 1;
+  min-width: 0;
+}
+.connect-card__band .chip {
+  background: #fff;
+  border-color: var(--ink-fixed);
+  color: var(--ink-fixed);
+}
+.connect-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: var(--lw) solid var(--ink-fixed);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 3px 4px 0 var(--ink-fixed);
+  transform: rotate(-6deg);
+}
+.connect-card__icon svg {
+  width: 28px;
+  height: 28px;
+}
+.connect-card:hover .connect-card__icon {
+  transform: rotate(6deg) scale(1.06);
+  transition: transform 0.25s var(--ease);
+}
+.connect-card__inner {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px 24px;
+}
+.connect-card__inner .card-note {
+  margin: 0;
+}
+.picker {
+  display: grid;
+  gap: 6px;
+}
+.picker__label {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.picker__saved {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.picker__select {
+  appearance: auto;
+  cursor: pointer;
+}
+.picker__select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.picker__search {
+  min-height: 42px;
+  font-size: 0.95rem;
+}
+.picker__more {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.connect-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-weight: 700;
+}
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 92px;
+  height: 46px;
+  padding: 4px;
+  border: var(--lw) solid var(--ink-fixed);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-fixed);
+  box-shadow: 3px 4px 0 var(--shadow-c);
+  cursor: pointer;
+}
+.switch--on {
+  justify-content: flex-end;
+  background: var(--mint);
+}
+.switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.switch__thumb {
+  width: 32px;
+  height: 32px;
+  border: var(--lw) solid var(--ink-fixed);
+  border-radius: 50%;
+  background: var(--y);
+  z-index: 1;
+}
+.switch__text {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-fixed);
+}
+.switch--on .switch__text {
+  right: auto;
+  left: 12px;
+}
+.connect-warn {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: var(--lw) dashed var(--ink-fixed);
+  border-radius: 14px;
+  background: var(--y);
+  color: var(--ink-fixed);
+  font-weight: 600;
+}
+.connect-warn code {
+  font: 700 0.85rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+.connect-warn p {
+  margin: 0;
+}
+.log td.log__result {
+  white-space: normal;
+  min-width: 180px;
+  max-width: 380px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 960px) {
+  .connect-grid {
+    grid-template-columns: 1fr;
+  }
+}

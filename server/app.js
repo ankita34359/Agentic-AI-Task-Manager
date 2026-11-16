@@ -6,13 +6,16 @@ import compression from 'compression';
 import { JsonDb } from './db.js';
 import { apiRoutes, DEFAULT_LIMITS } from './routes/api.js';
 import { Outbox } from './outbox.js';
+import { Connect } from './connect.js';
+import { createViaSocket } from './lib/viasocket.js';
 
 /**
  * Build the Express app. A function of `config` (+ optional db / rate limits) so tests can create isolated instances.
  */
-export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DEFAULT_LIMITS, outbox = new Outbox({ db, allowPrivate: config.allowPrivateWebhooks }) } = {}) {
+export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DEFAULT_LIMITS, outbox = new Outbox({ db, allowPrivate: config.allowPrivateWebhooks }), connect = new Connect({ db, via: createViaSocket(config.viasocket) }) } = {}) {
   const app = express();
   app.locals.outbox = outbox;
+  app.locals.connect = connect;
   outbox.start(); // picks up any retries that were pending when the process last stopped
   app.disable('x-powered-by');
   app.set('trust proxy', 1); // behind one reverse proxy / platform load balancer
@@ -22,11 +25,12 @@ export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DE
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", 'https://flow.viasocket.com'], // viaSocket's Connect popup script (connect.js)
           styleSrc: ["'self'", "'unsafe-inline'"], // framer-motion / React inline style attributes
           imgSrc: ["'self'", 'data:', 'blob:'],
           fontSrc: ["'self'"],
-          connectSrc: ["'self'"],
+          connectSrc: ["'self'", 'https://flow.viasocket.com'],
+          frameSrc: ['https://flow.viasocket.com'], // the Connect popup
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],
@@ -49,7 +53,7 @@ export function createApp(config, { db = JsonDb.open(config.dbFile), limits = DE
     res.json({ ok: true, uptime: Math.round(process.uptime()), env: config.isProd ? 'production' : 'development' });
   });
 
-  app.use('/api', apiRoutes({ db, config, outbox, limits }));
+  app.use('/api', apiRoutes({ db, config, outbox, connect, limits }));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'not_found' });

@@ -97,7 +97,7 @@ export class Outbox {
 
   log(workspaceId, payload, { attempt, of, ok, status, error, willRetry }) {
     const a = this.db.data.activity;
-    a.push({ id: crypto.randomUUID(), at: new Date(this.now()).toISOString(), workspaceId, event: payload.event, taskId: payload.taskId, title: payload.title, attempt, of, ok, status: status ?? null, error: error ?? null, willRetry: !!willRetry });
+    a.push({ id: crypto.randomUUID(), at: new Date(this.now()).toISOString(), workspaceId, via: 'events', event: payload.event, taskId: payload.taskId, title: payload.title, attempt, of, ok, status: status ?? null, error: error ?? null, willRetry: !!willRetry });
     if (a.length > LOG_CAP) a.splice(0, a.length - LOG_CAP);
   }
 

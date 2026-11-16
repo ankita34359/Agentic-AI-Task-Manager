@@ -32,6 +32,7 @@ npm run build
 NODE_PATH=$(npm root -g) node e2e/auth.e2e.cjs   # or: npm i -D playwright
 NODE_PATH=$(npm root -g) node e2e/board.e2e.cjs  # outcomes + kanban
 NODE_PATH=$(npm root -g) node e2e/integrations.e2e.cjs  # events outbox + Integrations page
+NODE_PATH=$(npm root -g) node e2e/connect.e2e.cjs       # Connect cards (fake viaSocket, stubbed popup)
 ```
 
 ## Configuration
@@ -45,6 +46,7 @@ All configuration is via environment variables (see `.env.example`; copy to `.en
 | `DATA_DIR` | `./server/data` | Where `db.json`, `uploads/` and the dev JWT secret live. Relative paths resolve against the project root. **Point at a persistent volume in production.** |
 | `JWT_SECRET` | *(dev: auto-generated)* | Required in production, ≥ 32 chars |
 | `PUBLIC_BASE_URL` | – | Public URL of the deployment (used for the M91 callback later) |
+| `VIASOCKET_ORG_ID`, `VIASOCKET_PROJECT_ID`, `VIASOCKET_EMBED_SECRET` | unset | viaSocket "Connect" (Google Sheets + Slack). All three are secrets, set on the host only. Unset = the Connect cards say "Needs setup"; the Events URL keeps working. |
 | `ALLOW_PRIVATE_WEBHOOKS` | off | `1` lets the events URL be a local http mock. **Ignored in production.** Tests/dev only. |
 
 Webhook URLs, API keys and tokens are entered in the admin UI and stored only inside `DATA_DIR` — never in the repo.

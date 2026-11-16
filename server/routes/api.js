@@ -11,7 +11,8 @@ export const DEFAULT_LIMITS = {
   login: { windowMs: 15 * 60_000, limit: 20, skipSuccessful: true }, // failed logins per IP
   signup: { windowMs: 60 * 60_000, limit: 20 },
   invite: { windowMs: 15 * 60_000, limit: 60 }, // invite-code lookups per IP (the code space is huge, this is belt and braces)
-  integrations: { windowMs: 60_000, limit: 20 }, // "Send test event" clicks per IP
+  integrations: { windowMs: 60_000, limit: 20 },
+  viasocket: { windowMs: 60_000, limit: 120 }, // Connect: token, option lists, connect/disconnect per IP
 };
 
 const limiter = ({ windowMs, limit, skipSuccessful }) =>
@@ -24,7 +25,7 @@ const limiter = ({ windowMs, limit, skipSuccessful }) =>
     handler: (_req, res) => res.status(429).json({ error: 'rate_limited' }),
   });
 
-export function apiRoutes({ db, config, outbox, limits = DEFAULT_LIMITS }) {
+export function apiRoutes({ db, config, outbox, connect, limits = DEFAULT_LIMITS }) {
   const r = express.Router();
   const auth = authenticate({ db, config });
 
@@ -111,8 +112,8 @@ export function apiRoutes({ db, config, outbox, limits = DEFAULT_LIMITS }) {
     res.json({ inviteCode: formatInvite(req.workspace.inviteCode) });
   });
 
-  r.use(taskRoutes({ db, auth, outbox }));
-  r.use(integrationRoutes({ db, auth, outbox, config, testLimiter: limiter(limits.integrations ?? DEFAULT_LIMITS.integrations) }));
+  r.use(taskRoutes({ db, auth, outbox, connect }));
+  r.use(integrationRoutes({ db, auth, outbox, connect, config, viaLimiter: limiter(limits.viasocket ?? DEFAULT_LIMITS.viasocket), testLimiter: limiter(limits.integrations ?? DEFAULT_LIMITS.integrations) }));
 
   return r;
 }

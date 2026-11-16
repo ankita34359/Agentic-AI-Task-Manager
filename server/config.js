@@ -69,5 +69,11 @@ export function loadConfig(env = process.env) {
     // Dev/test only: lets webhook URLs point at a local mock (http, loopback). Always off in production.
     allowPrivateWebhooks: !isProd && env.ALLOW_PRIVATE_WEBHOOKS === '1',
     publicBaseUrl: (env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, ''),
+    // viaSocket "Connect" (Google Sheets + Slack). All three are secrets: set them as environment variables, never in the repo.
+    viasocket: {
+      orgId: (env.VIASOCKET_ORG_ID || '').trim(),
+      projectId: (env.VIASOCKET_PROJECT_ID || '').trim(),
+      embedSecret: (env.VIASOCKET_EMBED_SECRET || '').trim(),
+    },
   });
 }

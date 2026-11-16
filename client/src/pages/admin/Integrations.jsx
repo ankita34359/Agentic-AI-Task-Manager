@@ -9,10 +9,12 @@ import { useToast } from '../../components/Toasts.jsx';
 import { api } from '../../lib/api.js';
 import { copyText } from '../../lib/clipboard.js';
 import { errorMessage } from '../../lib/errors.js';
+import ConnectCards from './ConnectCards.jsx';
 
 const DETAILED_SLACK = '*{{event}}* · {{owner}}\n{{title}} → {{status}} (impact {{impact}}/5, due {{deadline}})';
 
-const ERROR_WORDS = { http: 'Server said no', redirect: 'Redirected (not followed)', network: "Couldn't connect", timeout: 'Timed out', blocked: 'Blocked address', no_url: 'URL was removed', bad_url: 'Bad URL' };
+const ERROR_WORDS = { http: 'Server said no', redirect: 'Redirected (not followed)', network: "Couldn't connect", timeout: 'Timed out', blocked: 'Blocked address', no_url: 'URL was removed', bad_url: 'Bad URL', viasocket: 'viaSocket said no' };
+const VIA_LABEL = { events: 'Events URL', sheets: 'Google Sheets', slack: 'Slack' };
 const when = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 function CopyBlock({ label, text, copyAs = text, onCopy, id }) {
@@ -40,6 +42,8 @@ export default function Integrations() {
   const [busy, setBusy] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [testResult, setTestResult] = useState(null);
+
+  const setConnect = useCallback((connect) => setData((d) => (d ? { ...d, connect } : d)), []);
 
   const load = useCallback(async () => {
     try {
@@ -90,7 +94,7 @@ export default function Integrations() {
     setTestResult(null);
     try {
       const r = await api.post('/api/integrations/events/test');
-      setData({ events: r.events, activity: r.activity, reference: r.reference, adminName: r.adminName });
+      setData({ events: r.events, activity: r.activity, reference: r.reference, adminName: r.adminName, connect: r.connect });
       setTestResult(r.result);
     } catch (err) {
       setTestResult({ ok: false, status: null, error: err.code === 'no_url' ? 'no_url' : 'network' });
@@ -120,8 +124,10 @@ export default function Integrations() {
       <div className="container page-body">
         <header className="page-head">
           <h1 className="display h2 page-title">Integrations</h1>
-          <p className="page-sub">Connect a viaSocket flow so every new outcome and every move lands in Google Sheets and Slack.</p>
+          <p className="page-sub">Connect Google Sheets and Slack so every new outcome and every move lands there. The Events URL below still works too.</p>
         </header>
+
+        <ConnectCards connect={data.connect} onState={setConnect} />
 
         <div className="int-grid">
           <StickerCard color="yellow" tilt={-0.3} hover={false} halftone>
@@ -224,6 +230,7 @@ export default function Integrations() {
                   <thead>
                     <tr>
                       <th scope="col">When</th>
+                      <th scope="col">Via</th>
                       <th scope="col">Event</th>
                       <th scope="col">Outcome</th>
                       <th scope="col">Attempt</th>
@@ -235,6 +242,7 @@ export default function Integrations() {
                     {activity.map((a) => (
                       <tr key={a.id} className={a.ok ? '' : 'log__bad'}>
                         <td>{when(a.at)}</td>
+                      <td>{VIA_LABEL[a.via ?? 'events']}</td>
                         <td>
                           <code>{a.event}</code>
                         </td>
@@ -243,7 +251,7 @@ export default function Integrations() {
                           {a.attempt}/{a.of}
                         </td>
                         <td>{a.status ?? '—'}</td>
-                        <td>{a.ok ? '✓ Delivered' : `✗ ${ERROR_WORDS[a.error] || 'Failed'}${a.willRetry ? ' · will retry' : a.of > 1 ? ' · gave up' : ''}`}</td>
+                        <td className="log__result">{a.ok ? '✓ Delivered' : `✗ ${ERROR_WORDS[a.error] || 'Failed'}${a.detail ? `: ${a.detail}` : ''}${a.willRetry ? ' · will retry' : a.of > 1 ? ' · gave up' : ''}`}</td>
                       </tr>
                     ))}
                   </tbody>
